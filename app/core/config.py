@@ -3,7 +3,9 @@ from functools import lru_cache
 from typing import Optional, List
 from .security import generate_secret_key
 import os
+import logging
 
+logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     # アプリケーション設定
@@ -18,21 +20,23 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
 
     # データベース設定
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql+asyncpg://postgres:xfHDrsvUdxoViJEhHfmwSjSJGrrumQqA@postgres-wq-j.railway.internal:5432/railway"
-    )
-    
+    DATABASE_URL: str
+
     @property
     def async_database_url(self) -> str:
         """非同期接続用のURLを生成"""
         url = self.DATABASE_URL
+        logger.debug(f"Original DATABASE_URL: {url}")
+        
         # postgres:// を postgresql:// に変換
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
+        
         # 非同期ドライバを追加
         if not url.startswith("postgresql+asyncpg://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        
+        logger.debug(f"Async DATABASE_URL: {url}")
         return url
 
     # WordPress API設定（オプション）
@@ -47,7 +51,8 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
-
 @lru_cache()
-def get_settings():
-    return Settings()
+def get_settings() -> Settings:
+    settings = Settings()
+    logger.info(f"Loading settings for environment: {settings.ENVIRONMENT}")
+    return settings
