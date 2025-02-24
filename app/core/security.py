@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Union
+import secrets
+import string
 from jose import jwt
 from passlib.context import CryptContext
 from app.core.config import get_settings
@@ -9,14 +11,20 @@ settings = get_settings()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
+def generate_secret_key(length: int = 64) -> str:
+    """
+    ランダムな文字列を生成してシークレットキーとして使用
+    """
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
 def create_access_token(
     subject: Union[str, Any], expires_delta: timedelta = None
 ) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=60)
-    
+        expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
