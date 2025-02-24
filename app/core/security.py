@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
-from typing import Any, Union
+from typing import Any, Union, TYPE_CHECKING
 import secrets
 import string
 from jose import jwt
 from passlib.context import CryptContext
-from app.core.config import get_settings
 
-settings = get_settings()
+if TYPE_CHECKING:
+    from app.core.config import Settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
@@ -21,6 +21,10 @@ def generate_secret_key(length: int = 64) -> str:
 def create_access_token(
     subject: Union[str, Any], expires_delta: timedelta = None
 ) -> str:
+    # 関数内でsettingsをインポート
+    from app.core.config import get_settings
+    settings = get_settings()
+    
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
