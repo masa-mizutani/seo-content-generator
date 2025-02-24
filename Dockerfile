@@ -15,5 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # アプリケーションコードをコピー
 COPY . .
 
-# アプリケーションを実行
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 環境変数のデフォルト値を設定
+ENV PORT=8000
+ENV PYTHONPATH=/app
+
+# データベースのマイグレーションを実行し、その後アプリケーションを起動
+CMD alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
