@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # データベース設定
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql+asyncpg://postgres:postgres@postgres-wq-j.railway.internal:5432/railway"
+        "postgresql+asyncpg://postgres:xfHDrsvUdxoViJEhHfmwSjSJGrrumQqA@postgres-wq-j.railway.internal:5432/railway"
     )
     
     @property
