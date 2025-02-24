@@ -18,13 +18,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
 
     # データベース設定
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/app")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/app")
 
+    # 非同期データベース接続用のURL
     @property
-    def database_url(self):
-        if self.DATABASE_URL.startswith("postgres://"):
-            return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
-        return self.DATABASE_URL
+    def async_database_url(self) -> str:
+        """非同期接続用のURLを生成"""
+        return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
     # WordPress API設定（オプション）
     WP_API_URL: Optional[str] = None

@@ -4,9 +4,9 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-# PostgreSQLの場合はpostgresql+asyncpg://を使用
+# 非同期エンジンの作成
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    settings.async_database_url,
     echo=settings.DEBUG,
     future=True
 )
