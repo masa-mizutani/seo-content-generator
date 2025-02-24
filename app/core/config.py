@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional, List
 from .security import generate_secret_key
+import os
 
 
 class Settings(BaseSettings):
@@ -17,7 +18,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
 
     # データベース設定
-    DATABASE_URL: str = "sqlite:///./app.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+
+    @property
+    def database_url(self):
+        if self.DATABASE_URL.startswith("postgres://"):
+            return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        return self.DATABASE_URL
 
     # WordPress API設定（オプション）
     WP_API_URL: Optional[str] = None
