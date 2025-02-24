@@ -20,12 +20,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
 
     # データベース設定
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/seo_content"
 
     @property
     def async_database_url(self) -> str:
         """非同期接続用のURLを生成"""
-        url = self.DATABASE_URL
+        # Railway.appの環境変数を優先
+        url = os.getenv("DATABASE_URL", self.DATABASE_URL)
         logger.debug(f"Original DATABASE_URL: {url}")
         
         # postgres:// を postgresql:// に変換
@@ -55,4 +56,12 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     settings = Settings()
     logger.info(f"Loading settings for environment: {settings.ENVIRONMENT}")
+    
+    # 環境変数の存在を確認
+    db_url = os.getenv("DATABASE_URL")
+    if db_url:
+        logger.info("Using DATABASE_URL from environment variables")
+    else:
+        logger.warning("DATABASE_URL not found in environment variables, using default")
+    
     return settings
