@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -8,7 +9,13 @@ settings = get_settings()
 engine = create_async_engine(
     settings.async_database_url,
     echo=settings.DEBUG,
-    future=True
+    future=True,
+    poolclass=NullPool,  # コネクションプールを無効化
+    connect_args={
+        "server_settings": {
+            "application_name": "seo-content-generator"
+        }
+    }
 )
 
 AsyncSessionLocal = sessionmaker(
