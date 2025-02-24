@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
 
     # データベース設定
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/app")
 
     @property
     def database_url(self):
