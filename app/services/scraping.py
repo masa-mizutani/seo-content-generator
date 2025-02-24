@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Tuple
 from app.core.config import get_settings
 from urllib.parse import urljoin, urlparse
 import logging
-from reppy.robots import Robots
+from robotexclusionrulesparser import RobotExclusionRulesParser
 import re
 
 settings = get_settings()
@@ -18,6 +18,7 @@ class ScrapingService:
         self.session = None
         self.blocked_domains = settings.BLOCKED_DOMAINS
         self.robots_cache = {}  # robots.txtのキャッシュ
+        self.rerp = RobotExclusionRulesParser()
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession(headers=self.headers)
@@ -41,48 +42,23 @@ class ScrapingService:
 
             # キャッシュをチェック
             if robots_url in self.robots_cache:
-                robots = self.robots_cache[robots_url]
-            else:
-                async with self.session.get(robots_url) as response:
-                    if response.status == 200:
-                        robots_content = await response.text()
-                        robots = Robots.parse(robots_url, robots_content)
-                        self.robots_cache[robots_url] = robots
-                    else:
-                        return True  # robots.txtが存在しない場合は許可
+                return self.robots_cache[robots_url].is_allowed("*", url)
 
-            return robots.allowed(url, self.headers["User-Agent"])
+            # robots.txtを取得して解析
+            async with self.session.get(robots_url) as response:
+                if response.status == 200:
+                    robots_content = await response.text()
+                    self.rerp.parse(robots_content)
+                    self.robots_cache[robots_url] = self.rerp
+                    return self.rerp.is_allowed("*", url)
+                else:
+                    # robots.txtが見つからない場合は許可とみなす
+                    return True
+
         except Exception as e:
-            logging.error(f"Error checking robots.txt for {url}: {str(e)}")
-            return False  # エラーの場合は安全のため拒否
-
-    async def _check_login_required(self, html: str, url: str) -> Tuple[bool, str]:
-        """ログインが必要かどうかを確認"""
-        # ログインフォームやログイン関連の要素を検出
-        login_indicators = [
-            r'login',
-            r'sign[- ]?in',
-            r'log[- ]?in',
-            r'ログイン',
-            r'サインイン',
-            r'会員登録',
-            r'アカウント',
-        ]
-        
-        # メタリフレッシュやリダイレクトをチェック
-        if re.search(r'<meta[^>]+http-equiv=["\']refresh["\'][^>]*>', html, re.I):
-            return True, "リダイレクトが検出されました"
-
-        # ログイン関連の文字列を検索
-        for indicator in login_indicators:
-            if re.search(indicator, html, re.I):
-                return True, "ログインが必要な可能性があります"
-
-        # HTTPステータスコードが401または403の場合
-        if any(status in url for status in ['401', '403']):
-            return True, "アクセスが拒否されました"
-
-        return False, ""
+            logging.error(f"Error checking robots.txt for {url}: {e}")
+            # エラーの場合は安全のため許可とみなす
+            return True
 
     async def get_search_results(self, keyword: str) -> List[str]:
         """Google検索結果から上位URLを取得"""
@@ -190,3 +166,31 @@ class ScrapingService:
                     "alt": img.get("alt", "")
                 })
         return images
+
+    async def _check_login_required(self, html: str, url: str) -> Tuple[bool, str]:
+        """ログインが必要かどうかを確認"""
+        # ログインフォームやログイン関連の要素を検出
+        login_indicators = [
+            r'login',
+            r'sign[- ]?in',
+            r'log[- ]?in',
+            r'ログイン',
+            r'サインイン',
+            r'会員登録',
+            r'アカウント',
+        ]
+        
+        # メタリフレッシュやリダイレクトをチェック
+        if re.search(r'<meta[^>]+http-equiv=["\']refresh["\'][^>]*>', html, re.I):
+            return True, "リダイレクトが検出されました"
+
+        # ログイン関連の文字列を検索
+        for indicator in login_indicators:
+            if re.search(indicator, html, re.I):
+                return True, "ログインが必要な可能性があります"
+
+        # HTTPステータスコードが401または403の場合
+        if any(status in url for status in ['401', '403']):
+            return True, "アクセスが拒否されました"
+
+        return False, ""
