@@ -18,6 +18,11 @@ COPY . .
 # 環境変数のデフォルト値を設定
 ENV PORT=8000
 ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
-# データベースのマイグレーションを実行し、その後アプリケーションを起動
-CMD alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+# スタートアップスクリプトをコピー
+COPY start.sh .
+RUN chmod +x start.sh
+
+# スタートアップスクリプトを実行
+CMD ["./start.sh"]
