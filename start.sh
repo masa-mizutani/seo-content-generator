@@ -2,6 +2,7 @@
 set -e
 
 echo "Starting application initialization..."
+echo "PORT is: $PORT"
 
 # データベースの準備ができるまで待機
 MAX_RETRIES=30
@@ -13,13 +14,13 @@ wait_for_postgres() {
         echo "Attempting to connect to PostgreSQL (attempt $((retries + 1))/$MAX_RETRIES)..."
         if python -c "
 import sys
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from app.core.config import get_settings
 settings = get_settings()
 engine = create_engine(settings.DATABASE_URL.replace('+asyncpg', ''))
 try:
     with engine.connect() as conn:
-        result = conn.execute('SELECT 1')
+        result = conn.execute(text('SELECT 1'))
         sys.exit(0)
 except Exception as e:
     print(f'Database connection failed: {e}')

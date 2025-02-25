@@ -1,48 +1,59 @@
-import asyncio
 from logging.config import fileConfig
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from sqlalchemy.pool import NullPool
+import asyncio
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 from app.core.config import get_settings
-from app.db.base import Base  # すべてのモデルが `Base` から派生していると仮定
+from app.db.base import Base
 
-# Alembic の設定ファイルをロード
+# Alembicの設定オブジェクト
 config = context.config
+
+# 非同期用のデータベースURLを取得して設定を上書き
+settings = get_settings()
+config.set_main_option("sqlalchemy.url", settings.async_database_url)
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# メタデータを取得
+# ターゲットとなるメタデータ（全モデル情報）
 target_metadata = Base.metadata
 
-# 環境変数から非同期データベースURLを取得
-settings = get_settings()
-DATABASE_URL = settings.DATABASE_URL
-
-# 非同期エンジンを作成
-connectable = create_async_engine(DATABASE_URL, poolclass=NullPool)
-
-async def run_migrations_online():
-    """非同期でマイグレーションを実行"""
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-
-def do_run_migrations(sync_connection):
-    """同期接続でマイグレーションを実行"""
+def do_run_migrations(connection):
+    """同期的にマイグレーションを実行する関数"""
     context.configure(
-        connection=sync_connection,
-        target_metadata=target_metadata
+        connection=connection,
+        target_metadata=target_metadata,
     )
     with context.begin_transaction():
         context.run_migrations()
 
-if context.is_offline_mode():
-    # オフラインモードでは `context.configure` に URL を直接設定
-    context.configure(url=DATABASE_URL, target_metadata=target_metadata, literal_binds=True)
+def run_migrations_offline():
+    """オフラインモードでのマイグレーションを実行"""
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
     with context.begin_transaction():
         context.run_migrations()
-else:
-    async def run_and_cleanup():
-        await run_migrations_online()
-        await connectable.dispose()
-    asyncio.run(run_and_cleanup())
 
+def run_migrations_online():
+    """オンラインモードでのマイグレーションを実行"""
+    connectable = create_async_engine(
+        config.get_main_option("sqlalchemy.url"),
+        poolclass=pool.NullPool,
+    )
+
+    async def do_run():
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+
+    asyncio.run(do_run())
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()

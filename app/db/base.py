@@ -6,7 +6,7 @@ settings = get_settings()
 
 # SQLAlchemy async engine
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    settings.async_database_url,  # 変更：非同期用URLを使用
     echo=settings.DEBUG,
 )
 
