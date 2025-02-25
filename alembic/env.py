@@ -41,6 +41,8 @@ if context.is_offline_mode():
     with context.begin_transaction():
         context.run_migrations()
 else:
-    # `asyncio.run()` を使用するが、明示的に `connectable.dispose()` でクリーンアップする
-    asyncio.run(run_migrations_online())
-    connectable.dispose()
+    async def run_and_cleanup():
+        await run_migrations_online()
+        await connectable.dispose()
+    asyncio.run(run_and_cleanup())
+
