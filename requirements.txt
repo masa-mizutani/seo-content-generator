@@ -17,4 +17,5 @@ aiosqlite==0.19.0
 robotexclusionrulesparser==1.7.1
 asyncpg
 python-multipart
-
+python-jose[cryptography]
+passlib[bcrypt]
