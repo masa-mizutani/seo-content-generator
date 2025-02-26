@@ -54,4 +54,5 @@ def get_settings() -> Settings:
         logger.info("Using DATABASE_URL from environment variables")
     else:
         logger.warning("DATABASE_URL not found in environment variables, using default Docker Compose configuration")
+    logger.info(f"Database URL: {settings.DATABASE_URL}")
     return settings

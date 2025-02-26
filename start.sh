@@ -53,3 +53,4 @@ echo "=== Application Initialization Complete ==="
 echo "=== Starting Application Server on Port: $PORT ==="
 echo "=== $(date) ==="
 exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level debug --timeout-keep-alive 75
+
