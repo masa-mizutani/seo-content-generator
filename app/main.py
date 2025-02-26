@@ -61,7 +61,9 @@ async def root():
 # ヘルスチェックエンドポイント（プレフィックスの前に配置）
 @app.get("/api/v1/health")
 async def health_check():
+    logger.info("Health check endpoint was called")
     return {"status": "ok"}
+
 
 # APIルーターの登録（プレフィックスを含む）
 app.include_router(api_router, prefix=settings.API_V1_STR)
