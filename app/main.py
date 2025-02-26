@@ -58,8 +58,8 @@ async def root():
         "docs_url": f"{settings.API_V1_STR}/docs",
     }
 
-# ヘルスチェックエンドポイントの設定
-@app.get("/health")
+# ヘルスチェックエンドポイント（プレフィックスの前に配置）
+@app.get("/api/v1/health")
 async def health_check():
     return {"status": "ok"}
 

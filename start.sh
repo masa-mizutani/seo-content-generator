@@ -49,5 +49,7 @@ echo "Running database migrations..."
 alembic upgrade head
 
 # マイグレーションが成功した場合、アプリケーションを起動
-echo "Starting application server..."
-exec uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level debug
+echo "=== Application Initialization Complete ==="
+echo "=== Starting Application Server on Port: $PORT ==="
+echo "=== $(date) ==="
+exec uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level debug --timeout-keep-alive 75
