@@ -42,8 +42,8 @@ COPY . .
 # スタートアップスクリプトの準備
 RUN chmod +x start.sh
 
-# ヘルスチェック設定
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+# ヘルスチェック設定（開始待機期間を60秒に延長）
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:$PORT/api/v1/health || exit 1
 
 # スタートアップスクリプトを実行
