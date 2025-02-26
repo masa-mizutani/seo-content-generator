@@ -1,16 +1,40 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token
+from app.core.auth import get_current_user, get_token_expiration, oauth2_scheme
 from app.crud import user as user_crud
 from app.schemas.user import User, UserCreate
 from app.db.base import get_db
-from typing import Any
+from typing import Any, Dict
 
 router = APIRouter()
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+
+@router.get("/me", response_model=User)
+async def read_current_user(
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """
+    Get current user information
+    """
+    return current_user
+
+@router.get("/status")
+async def check_auth_status(
+    token: str = Depends(oauth2_scheme)
+) -> Dict[str, Any]:
+    """
+    Check authentication status and token expiration
+    """
+    expiration = get_token_expiration(token)
+    return {
+        "authenticated": True,
+        "expires_at": expiration,
+        "expires_in": (expiration - datetime.utcnow()).total_seconds() if expiration else None
+    }
 
 @router.post("/login")
 async def login(

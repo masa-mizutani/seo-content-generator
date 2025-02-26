@@ -9,6 +9,10 @@ async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
     result = await db.execute(select(User).where(User.email == email))
     return result.scalar_one_or_none()
 
+async def get_by_id(db: AsyncSession, id: int) -> Optional[User]:
+    result = await db.execute(select(User).where(User.id == id))
+    return result.scalar_one_or_none()
+
 async def authenticate(db: AsyncSession, email: str, password: str) -> Optional[User]:
     user = await get_by_email(db, email)
     if not user:

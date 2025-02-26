@@ -1,10 +1,14 @@
+import os
+import secrets
 from datetime import datetime, timedelta
 from typing import Any, Union
 from jose import jwt
 from passlib.context import CryptContext
-from app.core.config import get_settings
 
-settings = get_settings()
+# 環境変数 "SECRET_KEY" が設定されていればその値を使用し、
+# 設定されていなければランダムなシークレットキーを生成
+SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_urlsafe(32))
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def create_access_token(
@@ -16,7 +20,7 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(minutes=60)
     
     to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

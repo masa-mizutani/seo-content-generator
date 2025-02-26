@@ -17,7 +17,6 @@ class Content(Base):
     analysis_results = Column(JSON)  # キーワード分析結果
     scraping_results = Column(JSON)  # スクレイピング結果のサマリー
     wordpress_post_id = Column(Integer)  # WordPressに投稿された場合のID
-    gmb_post_id = Column(String)  # GMBに投稿された場合のID
     status = Column(String)  # draft, published, error
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
