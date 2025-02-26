@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+echo "DATABASE_URL is: $DATABASE_URL"
 echo "Starting application initialization..."
 echo "PORT is: $PORT"
 
