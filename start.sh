@@ -46,7 +46,7 @@ fi
 
 # データベースマイグレーションの実行を試みる
 echo "Running database migrations..."
-alembic upgrade head
+# alembic upgrade head
 
 # マイグレーションが成功した場合、アプリケーションを起動
 echo "=== Application Initialization Complete ==="
