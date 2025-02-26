@@ -38,11 +38,11 @@ except Exception as e:
 }
 
 # データベースの準備を待機
-echo "Waiting for PostgreSQL to be ready..."
-if ! wait_for_postgres; then
-    echo "PostgreSQL is not available. Exiting."
-    exit 1
-fi
+#echo "Waiting for PostgreSQL to be ready..."
+#if ! wait_for_postgres; then
+#    echo "PostgreSQL is not available. Exiting."
+#    exit 1
+#fi
 
 # データベースマイグレーションの実行を試みる
 echo "Running database migrations..."
