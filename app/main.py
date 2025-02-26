@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
+from app.api.v1.api import api_router
 import logging
 from contextlib import asynccontextmanager
 from app.db.session import AsyncSessionLocal
-from sqlalchemy import text  # 追加
+from sqlalchemy import text
 
 # ロギングの設定
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +23,7 @@ async def lifespan(app: FastAPI):
     try:
         async with AsyncSessionLocal() as session:
             result = await session.execute(text("SELECT 1"))
-            _ = result.scalar()  # await 削除。同期的に結果を取得
+            _ = result.scalar()
             logger.info("Database connection successful")
     except Exception as e:
         logger.error(f"Database connection failed: {str(e)}")
@@ -36,26 +37,31 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-# CORS設定
+# CORSミドルウェアの設定
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番では適切なオリジンに制限する
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# APIルーターのインポートと登録
-from app.api.v1 import api_router
-app.include_router(api_router, prefix=settings.API_V1_STR)
-
+# ルートエンドポイントの設定
 @app.get("/")
 async def root():
     return {
         "message": "Welcome to SEO Content Generator API",
         "version": settings.VERSION,
-        "docs_url": "/docs"
+        "docs_url": f"{settings.API_V1_STR}/docs",
     }
+
+# ヘルスチェックエンドポイントの設定
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+# APIルーターの登録（プレフィックスを含む）
+app.include_router(api_router, prefix=settings.API_V1_STR)
