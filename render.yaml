@@ -14,6 +14,8 @@ services:
         fromDatabase:
           name: postgres
           property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
     dependsOn:
       - postgres
 
