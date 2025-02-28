@@ -1,3 +1,8 @@
+echo "=== Environment Variables Dump ==="
+env
+echo "=================================="
+
+
 #!/bin/bash
 set -e
 
