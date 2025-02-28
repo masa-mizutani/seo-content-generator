@@ -58,4 +58,4 @@ def get_settings() -> Settings:
     logger.info(f"Database URL: {settings.DATABASE_URL}")
     return settings
 
-    #コメント
+#コメント
