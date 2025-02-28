@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: seo-content-generator
+    name: seo-content-generator-api
     env: docker
     buildCommand: docker build -t app .
     healthCheckPath: /api/v1/health
@@ -18,6 +18,19 @@ services:
         sync: false
     dependsOn:
       - postgres
+
+  - type: web
+    name: seo-content-generator-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://seo-content-generator-api-jjtm.onrender.com
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
 
 databases:
   - name: postgres
