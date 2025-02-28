@@ -21,10 +21,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 実行時に必要な最小限のシステム依存関係をインストール（curl を追加）
+# 実行時に必要な最小限のシステム依存関係をインストール（postgresql-client を追加）
 RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # 仮想環境をコピー
@@ -40,7 +41,7 @@ ENV PYTHONUNBUFFERED=1
 COPY . .
 
 # スタートアップスクリプトの準備
-RUN chmod +x start.sh
+RUN chmod +x start.sh wait-for-postgres.sh
 
 # ヘルスチェック設定（開始待機期間を60秒に延長）
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
