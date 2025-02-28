@@ -1,6 +1,9 @@
 #!/bin/sh
+echo "Starting start.sh..."
+
 echo "PORT is: $PORT"
 # ここで PostgreSQL の接続待機などの処理が始まる
+
 ./wait-for-postgres.sh
 alembic upgrade head
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
