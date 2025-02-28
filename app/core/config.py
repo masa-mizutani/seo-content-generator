@@ -43,8 +43,9 @@ class Settings(BaseSettings):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
 
-    class Config:
-        env_file = ".env"
+class Config:
+    # ENVIRONMENT が production なら .env ファイルを読み込まない（None に設定）
+    env_file = ".env" if os.getenv("ENVIRONMENT", "development") != "production" else None
 
 @lru_cache()
 def get_settings() -> Settings:
