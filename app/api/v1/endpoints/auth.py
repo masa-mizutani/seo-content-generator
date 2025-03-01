@@ -25,6 +25,17 @@ def create_access_token(
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
+def get_token_expiration(token: str) -> Optional[datetime]:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        exp = payload.get("exp")
+        if exp:
+            return datetime.fromtimestamp(exp)
+        return None
+    except jwt.JWTError as e:
+        print(f"Error decoding token for expiration: {str(e)}")
+        return None
+
 @router.get("/me", response_model=User)
 async def read_current_user(
     current_user: User = Depends(get_current_user)

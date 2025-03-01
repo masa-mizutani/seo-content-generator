@@ -21,17 +21,25 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        # デバッグログを追加
+        print(f"Decoding token: {token[:10]}...")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            print("No 'sub' claim in token")
             raise credentials_exception
-    except jwt.JWTError:
+        print(f"Token contains email: {email}")
+    except JWTError as e:
+        print(f"JWT decode error: {str(e)}")
         raise credentials_exception
     
-    user = await user_crud.get_by_id(db, int(user_id))
+    # メールアドレスでユーザーを検索
+    user = await user_crud.get_by_email(db, email=email)
     if user is None:
+        print(f"User with email {email} not found")
         raise credentials_exception
     if not user.is_active:
+        print(f"User {email} is inactive")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"

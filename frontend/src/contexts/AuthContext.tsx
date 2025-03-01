@@ -20,6 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    console.log('AuthContext: Initial token check:', { hasToken: !!token });
     if (token) {
       loadUser();
     } else {
@@ -29,10 +30,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUser = async () => {
     try {
+      console.log('AuthContext: Loading user data from API');
       const userData = await authApi.getCurrentUser();
+      console.log('AuthContext: User data loaded successfully:', userData);
       setUser(userData);
     } catch (err) {
-      console.error('Failed to load user:', err);
+      console.error('AuthContext: Failed to load user:', err);
       localStorage.removeItem('token');
     } finally {
       setLoading(false);
