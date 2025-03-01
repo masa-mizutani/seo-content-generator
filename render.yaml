@@ -12,12 +12,12 @@ services:
         value: production
       - key: DATABASE_URL
         fromDatabase:
-          name: postgres
+          name: seo-content-generator-db
           property: connectionString
       - key: OPENAI_API_KEY
         sync: false
     dependsOn:
-      - postgres
+      - seo-content-generator-db
 
   - type: web
     name: seo-content-generator-frontend
@@ -33,6 +33,6 @@ services:
         value: no-cache
 
 databases:
-  - name: postgres
+  - name: seo-content-generator-db
     databaseName: seo_content_db
     plan: free
