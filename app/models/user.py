@@ -22,3 +22,4 @@ class User(Base):
 
     # リレーションシップ
     contents = relationship("Content", back_populates="user")
+    wordpress_configs = relationship("WordPressConfig", back_populates="user")
