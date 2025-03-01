@@ -53,14 +53,37 @@ const Register = () => {
       try {
         console.log('Registering:', values);
         const { confirmPassword, ...registerData } = values;
-        await authApi.register(registerData);
+        
+        // APIリクエストを直接ここで行う
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: registerData.email,
+            password: registerData.password,
+            company_name: registerData.companyName,
+            phone_number: registerData.phoneNumber,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'アカウント登録に失敗しました');
+        }
+        
+        const data = await response.json();
+        console.log('Registration successful:', data);
+        
+        // 成功メッセージを表示
         setSuccess(true);
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } catch (error: any) {
         console.error('Registration error:', error);
-        setError(error.response?.data?.detail || 'アカウント登録に失敗しました。もう一度お試しください。');
+        setError(error.message || 'アカウント登録に失敗しました。もう一度お試しください。');
       }
     },
   });
