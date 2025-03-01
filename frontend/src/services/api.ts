@@ -50,7 +50,7 @@ export const authApi = {
   },
 
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/register', data);
+    const response = await api.post<AuthResponse>('/auth/signup', data);
     localStorage.setItem('token', response.data.access_token);
     return response.data;
   },
