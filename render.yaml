@@ -3,6 +3,7 @@ services:
     name: seo-content-generator-api
     env: docker
     buildCommand: docker build -t app .
+    startCommand: ./start.sh
     healthCheckPath: /api/v1/health
     healthCheckTimeout: 100
     envVars:

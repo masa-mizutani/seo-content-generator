@@ -10,7 +10,7 @@ echo "Database URL: $DATABASE_URL"
 max_attempts=30
 count=0
 
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -c '\q' 2>/dev/null || [ $count -eq $max_attempts ]; do
+until psql "$DATABASE_URL" -c '\q' 2>/dev/null || [ $count -eq $max_attempts ]; do
   count=$((count + 1))
   >&2 echo "Postgres is unavailable - sleeping (attempt $count/$max_attempts)"
   sleep 2
