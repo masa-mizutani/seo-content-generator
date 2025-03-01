@@ -10,9 +10,9 @@ import {
   Link,
   Alert,
   Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { authApi } from '../services/api';
 
 const validationSchema = yup.object({
   email: yup
@@ -39,6 +39,7 @@ const Register = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -51,14 +52,22 @@ const Register = () => {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       try {
+        setIsSubmitting(true);
+        setError(null);
+        
         console.log('Registering:', values);
         const { confirmPassword, ...registerData } = values;
         
+        // APIのURL
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        console.log('API URL:', apiUrl);
+        
         // APIリクエストを直接ここで行う
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/signup`, {
+        const response = await fetch(`${apiUrl}/api/v1/auth/signup`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           body: JSON.stringify({
             email: registerData.email,
@@ -68,9 +77,17 @@ const Register = () => {
           }),
         });
         
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || 'アカウント登録に失敗しました');
+          let errorMessage = 'アカウント登録に失敗しました';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorMessage;
+          } catch (e) {
+            console.error('Error parsing error response:', e);
+          }
+          throw new Error(errorMessage);
         }
         
         const data = await response.json();
@@ -84,9 +101,16 @@ const Register = () => {
       } catch (error: any) {
         console.error('Registration error:', error);
         setError(error.message || 'アカウント登録に失敗しました。もう一度お試しください。');
+      } finally {
+        setIsSubmitting(false);
       }
     },
   });
+
+  // デバッグ用：環境変数の表示
+  React.useEffect(() => {
+    console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+  }, []);
 
   return (
     <Box
@@ -168,10 +192,17 @@ const Register = () => {
             variant="contained"
             fullWidth
             type="submit"
-            disabled={formik.isSubmitting}
+            disabled={isSubmitting}
             sx={{ mb: 2 }}
           >
-            {formik.isSubmitting ? '登録中...' : '登録'}
+            {isSubmitting ? (
+              <>
+                <CircularProgress size={24} sx={{ mr: 1, color: 'white' }} />
+                登録中...
+              </>
+            ) : (
+              '登録'
+            )}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
             <Link component={RouterLink} to="/login">

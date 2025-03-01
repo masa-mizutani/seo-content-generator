@@ -42,10 +42,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORSミドルウェアの設定
+# CORSミドルウェアを追加
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # 本番環境では特定のオリジンのみを許可するように変更すべき
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
