@@ -45,10 +45,17 @@ app = FastAPI(
 # CORSミドルウェアを追加
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では特定のオリジンのみを許可するように変更すべき
+    allow_origins=[
+        "https://seo-content-generator-frontend.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "*"  # 開発中は全てのオリジンを許可
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    expose_headers=["Content-Type", "Content-Length"],
+    max_age=600,  # プリフライトリクエストのキャッシュ時間（秒）
 )
 
 # ルートエンドポイントの設定

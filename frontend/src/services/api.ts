@@ -17,7 +17,9 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: false,
 });
 
 // リクエストインターセプター
@@ -33,6 +35,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.error('API Error:', error);
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
@@ -44,13 +47,13 @@ api.interceptors.response.use(
 // 認証関連のAPI
 export const authApi = {
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/login', data);
+    const response = await api.post<AuthResponse>('/api/v1/auth/login', data);
     localStorage.setItem('token', response.data.access_token);
     return response.data;
   },
 
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/signup', data);
+    const response = await api.post<AuthResponse>('/api/v1/auth/signup', data);
     localStorage.setItem('token', response.data.access_token);
     return response.data;
   },
@@ -60,7 +63,7 @@ export const authApi = {
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const response = await api.get<User>('/auth/me');
+    const response = await api.get<User>('/api/v1/auth/me');
     return response.data;
   },
 };
@@ -68,44 +71,44 @@ export const authApi = {
 // コンテンツ生成関連のAPI
 export const contentApi = {
   generate: async (data: GenerationRequest): Promise<GeneratedContent> => {
-    const response = await api.post<GeneratedContent>('/content/generate', data);
+    const response = await api.post<GeneratedContent>('/api/v1/content/generate', data);
     return response.data;
   },
 
   getContents: async (): Promise<GeneratedContent[]> => {
-    const response = await api.get<GeneratedContent[]>('/content');
+    const response = await api.get<GeneratedContent[]>('/api/v1/content');
     return response.data;
   },
 
   getContent: async (id: number): Promise<GeneratedContent> => {
-    const response = await api.get<GeneratedContent>(`/content/${id}`);
+    const response = await api.get<GeneratedContent>(`/api/v1/content/${id}`);
     return response.data;
   },
 
   updateContent: async (id: number, data: Partial<GeneratedContent>): Promise<GeneratedContent> => {
-    const response = await api.put<GeneratedContent>(`/content/${id}`, data);
+    const response = await api.put<GeneratedContent>(`/api/v1/content/${id}`, data);
     return response.data;
   },
 
   deleteContent: async (id: number): Promise<void> => {
-    await api.delete(`/content/${id}`);
+    await api.delete(`/api/v1/content/${id}`);
   },
 };
 
 // WordPress関連のAPI
 export const wordpressApi = {
   getConfig: async (): Promise<WordPressConfig> => {
-    const response = await api.get<WordPressConfig>('/wordpress/config');
+    const response = await api.get<WordPressConfig>('/api/v1/wordpress/config');
     return response.data;
   },
 
   updateConfig: async (data: Partial<WordPressConfig>): Promise<WordPressConfig> => {
-    const response = await api.put<WordPressConfig>('/wordpress/config', data);
+    const response = await api.put<WordPressConfig>('/api/v1/wordpress/config', data);
     return response.data;
   },
 
   publishToWordPress: async (contentId: number): Promise<GeneratedContent> => {
-    const response = await api.post<GeneratedContent>(`/wordpress/publish/${contentId}`);
+    const response = await api.post<GeneratedContent>(`/api/v1/wordpress/publish/${contentId}`);
     return response.data;
   },
 };

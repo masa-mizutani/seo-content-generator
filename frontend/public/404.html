@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ページが見つかりません | SEO Content Generator</title>
+  <script>
+    // SPA用リダイレクト処理
+    (function() {
+      // URLから取得したパスを保存
+      var pathSegmentsToKeep = 0;
+      var l = window.location;
+      var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + 
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash;
+      window.location.replace(redirectUrl);
+    })();
+  </script>
+</head>
+<body>
+  <div style="text-align: center; padding: 50px;">
+    <h1>ページが見つかりません</h1>
+    <p>リダイレクト中です。しばらくお待ちください...</p>
+  </div>
+</body>
+</html>

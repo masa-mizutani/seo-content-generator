@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -40,18 +40,49 @@ const Register = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiUrl, setApiUrl] = useState<string>('');
 
-  // 環境変数のログ出力（デバッグ用）
-  React.useEffect(() => {
+  // 環境変数のロードとAPIベースURLの設定
+  useEffect(() => {
+    const url = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    setApiUrl(url);
     console.log('Environment variables:', {
       VITE_API_URL: import.meta.env.VITE_API_URL,
       MODE: import.meta.env.MODE,
       DEV: import.meta.env.DEV,
       PROD: import.meta.env.PROD,
+      apiUrl: url
     });
+    
+    // テスト用のCORSリクエスト
+    const testCors = async () => {
+      try {
+        const response = await fetch(`${url}/api/v1/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors'
+        });
+        console.log('CORS test result:', {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText
+        });
+      } catch (error) {
+        console.error('CORS test failed:', error);
+      }
+    };
+    
+    testCors();
   }, []);
 
   const handleSubmit = async (values: any) => {
+    if (!apiUrl) {
+      setError('API URLが設定されていません');
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       setError(null);
@@ -59,9 +90,7 @@ const Register = () => {
       console.log('Registering:', values);
       const { confirmPassword, ...data } = values;
       
-      // APIのURL
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      console.log('API URL:', apiUrl);
+      console.log('API URL for registration:', apiUrl);
       
       // APIリクエストを直接ここで行う
       const response = await fetch(`${apiUrl}/api/v1/auth/signup`, {
@@ -69,6 +98,7 @@ const Register = () => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({
           email: data.email,
@@ -77,7 +107,7 @@ const Register = () => {
           phone_number: data.phoneNumber,
         }),
         mode: 'cors',
-        credentials: 'same-origin',
+        credentials: 'omit',
       });
       
       console.log('Response status:', response.status);
@@ -95,6 +125,11 @@ const Register = () => {
       
       const responseData = await response.json();
       console.log('Registration successful:', responseData);
+      
+      // トークンを保存（もしあれば）
+      if (responseData.access_token) {
+        localStorage.setItem('token', responseData.access_token);
+      }
       
       // 成功メッセージを表示
       setSuccess(true);

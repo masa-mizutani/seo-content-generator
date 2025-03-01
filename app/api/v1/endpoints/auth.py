@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token
@@ -39,11 +39,19 @@ async def check_auth_status(
 @router.post("/login")
 async def login(
     db: AsyncSession = Depends(get_db),
-    form_data: OAuth2PasswordRequestForm = Depends()
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    response: Response = None,
 ) -> Any:
     """
     OAuth2 compatible token login, get an access token for future requests
     """
+    # CORSヘッダーを手動で追加
+    if response:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+
     user = await user_crud.authenticate(
         db=db, email=form_data.username, password=form_data.password
     )
@@ -69,11 +77,19 @@ async def login(
 @router.post("/signup", response_model=User)
 async def create_user(
     user_in: UserCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    response: Response = None,
 ) -> Any:
     """
     Create new user
     """
+    # CORSヘッダーを手動で追加
+    if response:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+
     user = await user_crud.get_by_email(db, email=user_in.email)
     if user:
         raise HTTPException(
