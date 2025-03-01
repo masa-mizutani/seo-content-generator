@@ -1,20 +1,16 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.security import create_access_token
-from app.core.auth import get_current_user, get_token_expiration, oauth2_scheme
+from app.api.v1.deps import get_current_user
 from app.crud import user as user_crud
+from app.db.session import AsyncSession
 from app.schemas.user import User, UserCreate
 from app.db.base import get_db
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from app.core.config import settings
 import jwt
-from typing import Optional
 
 router = APIRouter()
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 # token生成関数
 def create_access_token(

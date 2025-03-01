@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = _get_secret_key()
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
     OPENAI_API_KEY: str
@@ -57,5 +59,8 @@ def get_settings() -> Settings:
         logger.warning("DATABASE_URL not found in environment variables, using default Docker Compose configuration")
     logger.info(f"Database URL: {settings.DATABASE_URL}")
     return settings
+
+# グローバル変数として設定を提供
+settings = get_settings()
 
 #コメント
