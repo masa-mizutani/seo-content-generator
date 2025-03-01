@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -11,7 +11,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const validationSchema = yup.object({
@@ -27,8 +27,19 @@ const validationSchema = yup.object({
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const state = location.state as { message?: string } | null;
+    if (state?.message) {
+      setSuccess(state.message);
+      // stateをリセット
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
 
   const formik = useFormik({
     initialValues: {
@@ -38,7 +49,7 @@ const Login = () => {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       try {
-        setIsLoading(true);
+        setIsSubmitting(true);
         setError(null);
         
         // APIのURL
@@ -90,7 +101,7 @@ const Login = () => {
         console.error('Login error:', error);
         setError(error.message || 'ログインに失敗しました。認証情報を確認してください。');
       } finally {
-        setIsLoading(false);
+        setIsSubmitting(false);
       }
     },
   });
@@ -110,6 +121,11 @@ const Login = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {success}
           </Alert>
         )}
         <form onSubmit={formik.handleSubmit}>
@@ -141,10 +157,10 @@ const Login = () => {
             variant="contained"
             fullWidth
             type="submit"
-            disabled={isLoading}
+            disabled={isSubmitting}
             sx={{ mb: 2 }}
           >
-            {isLoading ? (
+            {isSubmitting ? (
               <>
                 <CircularProgress size={24} sx={{ mr: 1, color: 'white' }} />
                 ログイン中...
