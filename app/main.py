@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from app.db.session import AsyncSessionLocal
 from sqlalchemy import text
 from fastapi import Response
+from fastapi import Request
 
 # ロギングの設定
 logging.basicConfig(level=logging.INFO)
@@ -46,32 +47,35 @@ app = FastAPI(
 # CORSミドルウェアを追加
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://seo-content-generator-frontend.onrender.com",
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "*"  # 開発中は全てのオリジンを許可
-    ],
-    allow_origin_regex=r"https://(.*\.)?onrender\.com",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-    expose_headers=["Content-Type", "Content-Length"],
-    max_age=600,  # プリフライトリクエストのキャッシュ時間（秒）
+    expose_headers=["Content-Type", "Authorization"],
+    max_age=86400,
 )
 
-# OPTIONSリクエストに対して応答するミドルウェアを追加
+# カスタムミドルウェアを追加してOPTIONSリクエストに対応
 @app.middleware("http")
-async def options_middleware(request, call_next):
+async def options_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
         headers = {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin",
+            "Access-Control-Allow-Credentials": "true",
             "Access-Control-Max-Age": "86400",
         }
         return Response(status_code=200, headers=headers)
-    return await call_next(request)
+    
+    # 通常のリクエスト処理を続行
+    response = await call_next(request)
+    
+    # すべてのレスポンスにCORSヘッダーを追加
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
 
 # ルートエンドポイントの設定
 @app.get("/")

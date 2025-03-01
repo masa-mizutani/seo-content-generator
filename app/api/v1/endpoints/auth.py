@@ -8,10 +8,26 @@ from app.crud import user as user_crud
 from app.schemas.user import User, UserCreate
 from app.db.base import get_db
 from typing import Any, Dict
+from app.core.config import settings
+import jwt
+from typing import Optional
 
 router = APIRouter()
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+
+# token生成関数
+def create_access_token(
+    data: dict, expires_delta: Optional[timedelta] = None
+) -> str:
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
 
 @router.get("/me", response_model=User)
 async def read_current_user(
@@ -36,6 +52,19 @@ async def check_auth_status(
         "expires_in": (expiration - datetime.utcnow()).total_seconds() if expiration else None
     }
 
+@router.options("/login")
+async def login_options(response: Response):
+    """
+    Handle OPTIONS requests for login endpoint
+    """
+    # Set CORS headers
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    return {}
+
 @router.post("/login")
 async def login(
     db: AsyncSession = Depends(get_db),
@@ -50,29 +79,67 @@ async def login(
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
 
-    user = await user_crud.authenticate(
-        db=db, email=form_data.username, password=form_data.password
-    )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+    try:
+        # デバッグログ
+        print(f"Login attempt for: {form_data.username}")
+        
+        user = await user_crud.authenticate(
+            db=db, email=form_data.username, password=form_data.password
         )
-    elif not user.is_active:
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
+        elif not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="Inactive user"
+            )
+
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email}, expires_delta=access_token_expires
+        )
+        
+        # 明示的にヘッダーを設定
+        if response:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+        return {
+            "access_token": access_token, 
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "company_name": user.company_name,
+                "is_active": user.is_active
+            }
+        }
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {str(e)}"
         )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    return {
-        "access_token": create_access_token(
-            user.id, expires_delta=access_token_expires
-        ),
-        "token_type": "bearer",
-    }
+@router.options("/signup")
+async def signup_options(response: Response):
+    """
+    Handle OPTIONS requests for signup endpoint
+    """
+    # Set CORS headers
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    return {}
 
 @router.post("/signup", response_model=User)
 async def create_user(
@@ -88,14 +155,31 @@ async def create_user(
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-
-    user = await user_crud.get_by_email(db, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
     
-    user = await user_crud.create(db, obj_in=user_in)
-    return user
+    try:
+        # デバッグログ
+        print(f"Registration attempt for: {user_in.email}")
+        
+        user = await user_crud.get_by_email(db=db, email=user_in.email)
+        if user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The user with this email already exists in the system.",
+            )
+        user = await user_crud.create(db=db, obj_in=user_in)
+        
+        # 明示的にヘッダーを再設定
+        if response:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+        return user
+    except Exception as e:
+        print(f"Registration error: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
