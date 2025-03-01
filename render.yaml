@@ -39,14 +39,6 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
-      - type: redirect
-        source: /login
-        destination: /
-        status: 200
-      - type: redirect
-        source: /register
-        destination: /
-        status: 200
 
 databases:
   - name: seo-content-generator-db

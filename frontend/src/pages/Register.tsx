@@ -41,6 +41,74 @@ const Register = () => {
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 環境変数のログ出力（デバッグ用）
+  React.useEffect(() => {
+    console.log('Environment variables:', {
+      VITE_API_URL: import.meta.env.VITE_API_URL,
+      MODE: import.meta.env.MODE,
+      DEV: import.meta.env.DEV,
+      PROD: import.meta.env.PROD,
+    });
+  }, []);
+
+  const handleSubmit = async (values: any) => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      console.log('Registering:', values);
+      const { confirmPassword, ...data } = values;
+      
+      // APIのURL
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      console.log('API URL:', apiUrl);
+      
+      // APIリクエストを直接ここで行う
+      const response = await fetch(`${apiUrl}/api/v1/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          company_name: data.companyName,
+          phone_number: data.phoneNumber,
+        }),
+        mode: 'cors',
+        credentials: 'same-origin',
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        let errorMessage = 'アカウント登録に失敗しました';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch (e) {
+          console.error('Error parsing error response:', e);
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const responseData = await response.json();
+      console.log('Registration successful:', responseData);
+      
+      // 成功メッセージを表示
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      setError(err.message || 'アカウント登録に失敗しました。もう一度お試しください。');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -50,67 +118,8 @@ const Register = () => {
       phoneNumber: '',
     },
     validationSchema: validationSchema,
-    onSubmit: async (values) => {
-      try {
-        setIsSubmitting(true);
-        setError(null);
-        
-        console.log('Registering:', values);
-        const { confirmPassword, ...registerData } = values;
-        
-        // APIのURL
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        console.log('API URL:', apiUrl);
-        
-        // APIリクエストを直接ここで行う
-        const response = await fetch(`${apiUrl}/api/v1/auth/signup`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            email: registerData.email,
-            password: registerData.password,
-            company_name: registerData.companyName,
-            phone_number: registerData.phoneNumber,
-          }),
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          let errorMessage = 'アカウント登録に失敗しました';
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.detail || errorMessage;
-          } catch (e) {
-            console.error('Error parsing error response:', e);
-          }
-          throw new Error(errorMessage);
-        }
-        
-        const data = await response.json();
-        console.log('Registration successful:', data);
-        
-        // 成功メッセージを表示
-        setSuccess(true);
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
-      } catch (error: any) {
-        console.error('Registration error:', error);
-        setError(error.message || 'アカウント登録に失敗しました。もう一度お試しください。');
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
+    onSubmit: handleSubmit,
   });
-
-  // デバッグ用：環境変数の表示
-  React.useEffect(() => {
-    console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-  }, []);
 
   return (
     <Box

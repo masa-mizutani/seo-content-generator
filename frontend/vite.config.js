@@ -2,8 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
+import { resolve } from 'path';
 
-// Create _redirects file for Netlify/Render SPA routing
+// Create _redirects file for SPA routing
 const redirectsContent = '/* /index.html 200';
 fs.writeFileSync('./public/_redirects', redirectsContent);
 
@@ -17,10 +18,18 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        login: resolve(__dirname, 'login/index.html'),
+        register: resolve(__dirname, 'register/index.html'),
+      },
+    },
   },
   server: {
     port: 3000,
     strictPort: true,
-    host: true
+    host: true,
+    historyApiFallback: true,
   }
 });

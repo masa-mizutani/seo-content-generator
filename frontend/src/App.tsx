@@ -25,6 +25,15 @@ const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) =>
 };
 
 function AppContent() {
+  // デバッグ用：現在のURL情報をログに出力
+  React.useEffect(() => {
+    console.log('Current location:', {
+      pathname: window.location.pathname,
+      href: window.location.href,
+      origin: window.location.origin
+    });
+  }, []);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
@@ -35,6 +44,7 @@ function AppContent() {
           <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Container>
     </Box>
