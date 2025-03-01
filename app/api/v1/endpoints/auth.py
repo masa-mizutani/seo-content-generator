@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from app.api.v1.deps import get_current_user
+from app.core.auth import get_current_user, oauth2_scheme
 from app.crud import user as user_crud
 from app.db.session import AsyncSession
 from app.schemas.user import User, UserCreate

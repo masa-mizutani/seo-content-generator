@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
-from app.core.security import SECRET_KEY
+from app.core.config import settings
 from app.crud import user as user_crud
 from app.db.base import get_db
 from app.models.user import User
@@ -21,7 +21,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
@@ -40,7 +40,7 @@ async def get_current_user(
 
 def get_token_expiration(token: str) -> Optional[datetime]:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         exp = payload.get("exp")
         if exp:
             return datetime.fromtimestamp(exp)
