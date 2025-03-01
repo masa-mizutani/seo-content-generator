@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: Error | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ user: User }>;
   register: (email: string, password: string, companyName: string, phoneNumber: string) => Promise<void>;
   logout: () => void;
 }
@@ -46,12 +46,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setError(null);
       console.log('AuthContext: Attempting login with:', { email });
-      const response = await authApi.login({ email, password });
-      console.log('AuthContext: Login successful, setting user:', response.user);
-      setUser(response.user);
+      
+      // ユーザー情報を取得
+      const userData = await authApi.getCurrentUser();
+      console.log('AuthContext: Login successful, setting user:', userData);
+      setUser(userData);
+      return { user: userData };
     } catch (err) {
       console.error('AuthContext: Login failed:', err);
-      setError(err as Error);
+      setError(err instanceof Error ? err : new Error('ログインに失敗しました'));
       throw err;
     }
   };

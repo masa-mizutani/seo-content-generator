@@ -35,6 +35,7 @@ export interface SearchResult {
 export interface GenerationRequest {
   keyword: string;
   max_results?: number;
+  analysis_results?: Record<string, any>;
 }
 
 export interface GeneratedContent {

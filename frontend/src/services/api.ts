@@ -85,7 +85,11 @@ export const authApi = {
 // コンテンツ生成関連のAPI
 export const contentApi = {
   generate: async (data: GenerationRequest): Promise<GeneratedContent> => {
-    const response = await api.post<GeneratedContent>('/api/v1/content/generate', data);
+    // URLクエリパラメータとしてkeywordを送信し、リクエストボディにanalysis_resultsを含める
+    const response = await api.post<GeneratedContent>(
+      `/api/v1/content/generate?keyword=${encodeURIComponent(data.keyword)}`, 
+      { analysis_results: data.analysis_results }
+    );
     return response.data;
   },
 

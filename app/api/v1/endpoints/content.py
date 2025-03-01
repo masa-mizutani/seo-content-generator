@@ -1,23 +1,54 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import get_db
-from typing import Dict, Any
+from typing import Dict, Any, List
 import openai
 from app.core.config import get_settings
+from pydantic import BaseModel
 
 router = APIRouter()
 settings = get_settings()
 
+class AnalysisRequest(BaseModel):
+    analysis_results: Dict[str, Any]
+
+@router.get("/", response_model=List[Dict[str, Any]])
+async def get_contents(db: AsyncSession = Depends(get_db)):
+    """
+    生成済みコンテンツの一覧を取得します
+    """
+    try:
+        # ここではダミーデータを返します
+        # 実際のアプリケーションではデータベースからデータを取得する処理を実装します
+        return [
+            {
+                "id": 1,
+                "keyword": "SEO対策",
+                "title": "2023年最新のSEO対策ガイド",
+                "content": "# 2023年最新のSEO対策ガイド\n\n## はじめに\nSEO対策は常に変化しています...",
+                "created_at": "2023-01-01T00:00:00",
+                "user_id": 1,
+                "status": "draft"
+            }
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/generate", response_model=Dict[str, Any])
 async def generate_content(
-    keyword: str,
-    analysis_results: Dict[str, Any],
+    keyword: str = Query(..., description="検索キーワード"),
+    request: AnalysisRequest = None,
     db: AsyncSession = Depends(get_db)
 ):
     """
     分析結果を基にAIで記事を生成します
     """
     try:
+        # リクエストボディが空の場合はデフォルト値を設定
+        analysis_results = {}
+        if request and hasattr(request, 'analysis_results'):
+            analysis_results = request.analysis_results
+        
         # OpenAI APIを使用して記事を生成
         completion = await openai.ChatCompletion.acreate(
             model="gpt-40",

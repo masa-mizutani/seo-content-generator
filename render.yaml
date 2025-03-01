@@ -39,12 +39,21 @@ services:
   - type: web
     name: seo-content-generator-frontend
     env: static
-    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
+    buildCommand: cd frontend && rm -rf dist node_modules && npm install --legacy-peer-deps && npm run build
     staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_URL
         value: https://seo-content-generator-jjtm.onrender.com
     headers:
+      - path: /*
+        name: Cache-Control
+        value: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+      - path: /*
+        name: Pragma
+        value: no-cache
+      - path: /*
+        name: Expires
+        value: 0
       - path: /*
         name: Cache-Control
         value: no-cache

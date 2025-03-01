@@ -17,6 +17,14 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        // キャッシュバスティングのためにファイル名にタイムスタンプを追加
+        entryFileNames: `assets/[name]-[hash]-${new Date().getTime()}.js`,
+        chunkFileNames: `assets/[name]-[hash]-${new Date().getTime()}.js`,
+        assetFileNames: `assets/[name]-[hash]-${new Date().getTime()}.[ext]`
+      }
+    }
   },
   server: {
     port: 3000,

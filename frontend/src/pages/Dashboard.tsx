@@ -1,58 +1,20 @@
-import React from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-} from '@mui/material';
+import React, { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 
-const Dashboard = () => {
-  return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        ダッシュボード
-      </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">
-                生成済み記事
-              </Typography>
-              <Typography variant="h3">
-                0
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">
-                WordPress投稿数
-              </Typography>
-              <Typography variant="h3">
-                0
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">
-                GMB投稿数
-              </Typography>
-              <Typography variant="h3">
-                0
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
-  );
+/**
+ * ダッシュボードコンポーネント
+ * 
+ * このコンポーネントは完全に簡素化され、コンテンツ生成ページに自動的にリダイレクトします。
+ * 以前の実装（統計情報やカードの表示など）はすべて削除されました。
+ */
+const Dashboard: React.FC = () => {
+  // コンポーネントがマウントされたときにコンソールにログを出力
+  useEffect(() => {
+    console.log('Dashboard component mounted - Redirecting to /generate');
+  }, []);
+
+  // コンテンツ生成ページに即座にリダイレクト
+  return <Navigate to="/generate" replace />;
 };
 
 export default Dashboard;

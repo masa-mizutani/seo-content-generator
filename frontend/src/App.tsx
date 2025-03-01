@@ -3,20 +3,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Container, CircularProgress } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
-import Dashboard from './pages/Dashboard';
 import ContentGeneration from './pages/ContentGeneration';
-import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
 // 認証が必要なルートのラッパーコンポーネント
 const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
   const { user, loading } = useAuth();
-
-  // デバッグログを追加
-  React.useEffect(() => {
-    console.log('PrivateRoute state:', { user, loading });
-  }, [user, loading]);
 
   if (loading) {
     return (
@@ -29,27 +22,27 @@ const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) =>
   return user ? element : <Navigate to="/login" />;
 };
 
+// ダッシュボードページは削除され、すべてのアクセスはコンテンツ生成ページにリダイレクトされます
 function AppContent() {
-  // デバッグ用：現在のURL情報をログに出力
-  React.useEffect(() => {
-    console.log('Current location:', {
-      pathname: window.location.pathname,
-      href: window.location.href,
-      origin: window.location.origin
-    });
-  }, []);
-
+  console.log('AppContent rendered - All dashboard access redirected to /generate');
+  
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
       <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
         <Routes>
-          <Route path="/" element={<PrivateRoute element={<Dashboard />} />} />
+          {/* ルートパスはコンテンツ生成ページにリダイレクト */}
+          <Route path="/" element={<Navigate to="/generate" replace />} />
+          
+          {/* コンテンツ生成ページ */}
           <Route path="/generate" element={<PrivateRoute element={<ContentGeneration />} />} />
-          <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />
+          
+          {/* 認証ページ */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          
+          {/* その他のパスはすべてコンテンツ生成ページにリダイレクト */}
+          <Route path="*" element={<Navigate to="/generate" replace />} />
         </Routes>
       </Container>
     </Box>
