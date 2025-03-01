@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
-import { resolve } from 'path';
 
 // Create _redirects file for SPA routing
 const redirectsContent = '/* /index.html 200';
@@ -18,13 +17,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        login: resolve(__dirname, 'login/index.html'),
-        register: resolve(__dirname, 'register/index.html'),
-      },
-    },
   },
   server: {
     port: 3000,
