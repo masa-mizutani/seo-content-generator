@@ -13,6 +13,11 @@ import Register from './pages/Register';
 const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
   const { user, loading } = useAuth();
 
+  // デバッグログを追加
+  React.useEffect(() => {
+    console.log('PrivateRoute state:', { user, loading });
+  }, [user, loading]);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
