@@ -47,7 +47,16 @@ api.interceptors.response.use(
 // 認証関連のAPI
 export const authApi = {
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/api/v1/auth/login', data);
+    // FormDataを使用してOAuth2形式で送信
+    const formData = new URLSearchParams();
+    formData.append('username', data.email);
+    formData.append('password', data.password);
+
+    const response = await api.post<AuthResponse>('/api/v1/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
     localStorage.setItem('token', response.data.access_token);
     return response.data;
   },
