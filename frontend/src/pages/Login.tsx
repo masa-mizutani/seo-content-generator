@@ -116,10 +116,15 @@ const Login = () => {
             localStorage.setItem('token', 'temp-token-for-no-cors-mode');
             
             // ログイン処理の完了 - 代替トークンを使用
-            await login('temp-token-for-no-cors-mode');
-            
-            // ダッシュボードへリダイレクト
-            navigate('/dashboard');
+            try {
+              await login(values.email, values.password);
+              
+              // ダッシュボードへリダイレクト
+              navigate('/dashboard');
+            } catch (loginError) {
+              console.error('Error during login context update:', loginError);
+              throw loginError;
+            }
             return;
           } catch (noCorsError) {
             console.error('No-CORS request also failed:', noCorsError);
@@ -156,10 +161,15 @@ const Login = () => {
           localStorage.setItem('token', data.access_token);
           
           // ログイン処理の完了
-          await login(data.access_token);
-          
-          // ダッシュボードへリダイレクト
-          navigate('/dashboard');
+          try {
+            await login(values.email, values.password);
+            
+            // ダッシュボードへリダイレクト
+            navigate('/dashboard');
+          } catch (loginError) {
+            console.error('Error during login context update:', loginError);
+            throw loginError;
+          }
         } else {
           throw new Error('トークンが取得できませんでした');
         }
