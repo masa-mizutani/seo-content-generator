@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -8,8 +8,11 @@ import {
   Button,
   Paper,
   Link,
+  Alert,
+  Snackbar,
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { authApi } from '../services/api';
 
 const validationSchema = yup.object({
   email: yup
@@ -33,6 +36,10 @@ const validationSchema = yup.object({
 });
 
 const Register = () => {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -44,10 +51,16 @@ const Register = () => {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       try {
-        // TODO: API呼び出しを実装
         console.log('Registering:', values);
-      } catch (error) {
+        const { confirmPassword, ...registerData } = values;
+        await authApi.register(registerData);
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } catch (error: any) {
         console.error('Registration error:', error);
+        setError(error.response?.data?.detail || 'アカウント登録に失敗しました。もう一度お試しください。');
       }
     },
   });
@@ -64,6 +77,11 @@ const Register = () => {
         アカウント登録
       </Typography>
       <Paper sx={{ p: 3, maxWidth: 400, width: '100%' }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <form onSubmit={formik.handleSubmit}>
           <TextField
             fullWidth
@@ -127,9 +145,10 @@ const Register = () => {
             variant="contained"
             fullWidth
             type="submit"
+            disabled={formik.isSubmitting}
             sx={{ mb: 2 }}
           >
-            登録
+            {formik.isSubmitting ? '登録中...' : '登録'}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
             <Link component={RouterLink} to="/login">
@@ -138,6 +157,15 @@ const Register = () => {
           </Box>
         </form>
       </Paper>
+      <Snackbar
+        open={success}
+        autoHideDuration={2000}
+        onClose={() => setSuccess(false)}
+      >
+        <Alert severity="success">
+          アカウント登録が完了しました。ログイン画面に移動します。
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
