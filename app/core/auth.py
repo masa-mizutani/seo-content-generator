@@ -25,7 +25,7 @@ async def get_current_user(
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except JWTError:
+    except jwt.JWTError:
         raise credentials_exception
     
     user = await user_crud.get_by_id(db, int(user_id))
@@ -45,5 +45,5 @@ def get_token_expiration(token: str) -> Optional[datetime]:
         if exp:
             return datetime.fromtimestamp(exp)
         return None
-    except JWTError:
+    except jwt.JWTError:
         return None

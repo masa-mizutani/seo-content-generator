@@ -8,7 +8,7 @@ from app.schemas.user import User, UserCreate
 from app.db.base import get_db
 from typing import Any, Dict, Optional
 from app.core.config import settings
-import jwt
+from jose import jwt
 
 router = APIRouter()
 

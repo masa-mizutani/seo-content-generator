@@ -20,4 +20,4 @@ python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
 email_validator
-
+PyJWT==2.8.0
