@@ -56,19 +56,21 @@ const Login = () => {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         console.log('API URL:', apiUrl);
         
+        // FastAPIのOAuth2形式に合わせてFormDataを使用
+        const formData = new URLSearchParams();
+        formData.append('username', values.email); // OAuth2では'username'が必要
+        formData.append('password', values.password);
+        
         // APIリクエストを直接ここで行う
         const response = await fetch(`${apiUrl}/api/v1/auth/login`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json',
           },
-          body: JSON.stringify({
-            email: values.email,
-            password: values.password,
-          }),
+          body: formData,
           mode: 'cors',
-          credentials: 'same-origin',
+          credentials: 'omit',
         });
         
         console.log('Login response status:', response.status);
@@ -77,7 +79,15 @@ const Login = () => {
           let errorMessage = 'ログインに失敗しました';
           try {
             const errorData = await response.json();
-            errorMessage = errorData.detail || errorMessage;
+            console.log('Error data:', errorData);
+            
+            if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail;
+            } else if (errorData.detail && Array.isArray(errorData.detail)) {
+              errorMessage = errorData.detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ');
+            } else if (errorData.detail && typeof errorData.detail === 'object') {
+              errorMessage = JSON.stringify(errorData.detail);
+            }
           } catch (e) {
             console.error('Error parsing error response:', e);
           }
@@ -88,15 +98,17 @@ const Login = () => {
         console.log('Login successful:', data);
         
         // トークンを保存
-        localStorage.setItem('token', data.access_token);
-        
-        // ユーザー情報を保存
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.access_token) {
+          localStorage.setItem('token', data.access_token);
+          
+          // ログイン処理の完了
+          await login(data.access_token);
+          
+          // ダッシュボードへリダイレクト
+          navigate('/dashboard');
+        } else {
+          throw new Error('トークンが取得できませんでした');
         }
-        
-        // ダッシュボードへリダイレクト
-        navigate('/');
       } catch (error: any) {
         console.error('Login error:', error);
         setError(error.message || 'ログインに失敗しました。認証情報を確認してください。');
