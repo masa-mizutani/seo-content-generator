@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useFormik } from 'formik';
+import { useFormik, FormikHelpers } from 'formik';
 import * as yup from 'yup';
 import {
   Box,
@@ -13,7 +13,9 @@ import {
 } from '@mui/material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { authApi } from '../services/api';
 
+// バリデーションスキーマ
 const validationSchema = yup.object({
   email: yup
     .string()
@@ -23,6 +25,12 @@ const validationSchema = yup.object({
     .string()
     .required('パスワードを入力してください'),
 });
+
+// フォームの値の型定義
+interface FormValues {
+  email: string;
+  password: string;
+}
 
 const Login = () => {
   const { login } = useAuth();
@@ -41,110 +49,82 @@ const Login = () => {
     }
   }, [location, navigate]);
 
+  const handleSubmit = async (values: FormValues, { setSubmitting, setStatus }: FormikHelpers<FormValues>) => {
+    try {
+      setError(null);
+      setStatus(null);
+      setIsLoggingIn(true);
+      console.log('Logging in with:', values);
+
+      try {
+        // authApiを使用してログイン
+        await authApi.login(values.email, values.password);
+        
+        // ユーザー情報を取得してコンテキストを更新
+        try {
+          await authApi.getCurrentUser();
+          
+          // コンテンツ生成ページへリダイレクト
+          navigate('/generate');
+        } catch (userError) {
+          console.error('Error during user data fetch:', userError);
+          setError('ユーザー情報の取得に失敗しました。再度ログインしてください。');
+          throw userError;
+        }
+      } catch (loginError) {
+        console.error('Login API error:', loginError);
+        if (loginError instanceof Error) {
+          setError(loginError.message);
+        } else {
+          setError('ログインに失敗しました');
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      // エラーがまだ設定されていない場合のみ設定
+      if (!error) {
+        setError('予期せぬエラーが発生しました。再度お試しください。');
+      }
+    } finally {
+      setSubmitting(false);
+      setIsLoggingIn(false);
+    }
+  };
+
   const formik = useFormik({
     initialValues: {
       email: '',
       password: '',
     },
     validationSchema: validationSchema,
-    onSubmit: async (values, { setSubmitting, setStatus }) => {
-      try {
-        setStatus(null);
-        setIsLoggingIn(true);
-        console.log('Logging in with:', values);
-
-        // APIエンドポイントのURLを構築
-        const loginUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/auth/login`;
-        console.log('Login URL:', loginUrl);
-
-        // FormDataを使用してOAuth2形式で送信
-        const formData = new URLSearchParams();
-        formData.append('username', values.email);
-        formData.append('password', values.password);
-
-        // 直接fetchを使用してログイン
-        const response = await fetch(loginUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: formData,
-          credentials: 'include',
-        });
-
-        console.log('Login response status:', response.status);
-        
-        if (!response.ok) {
-          let errorMessage = 'ログインに失敗しました';
-          try {
-            const errorData = await response.json();
-            console.log('Error data:', errorData);
-            
-            if (typeof errorData.detail === 'string') {
-              errorMessage = errorData.detail;
-            } else if (errorData.detail && Array.isArray(errorData.detail)) {
-              errorMessage = errorData.detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ');
-            } else if (errorData.detail && typeof errorData.detail === 'object') {
-              errorMessage = JSON.stringify(errorData.detail);
-            }
-          } catch (e) {
-            console.error('Error parsing error response:', e);
-          }
-          throw new Error(errorMessage);
-        }
-        
-        const data = await response.json();
-        console.log('Login successful:', data);
-        
-        // トークンを保存
-        if (data.access_token) {
-          localStorage.setItem('token', data.access_token);
-          
-          // ログイン処理の完了
-          try {
-            await login(values.email, values.password);
-            
-            // コンテンツ生成ページへリダイレクト
-            navigate('/generate');
-          } catch (loginError) {
-            console.error('Error during login context update:', loginError);
-            throw loginError;
-          }
-        } else {
-          throw new Error('トークンが取得できませんでした');
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        setStatus(error instanceof Error ? error.message : '予期せぬエラーが発生しました');
-      } finally {
-        setSubmitting(false);
-        setIsLoggingIn(false);
-      }
-    },
+    onSubmit: handleSubmit,
   });
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}
-    >
-      <Typography variant="h4" gutterBottom>
-        ログイン
-      </Typography>
-      <Paper sx={{ p: 3, maxWidth: 400, width: '100%' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+      <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 400 }}>
+        <Typography variant="h5" component="h1" gutterBottom align="center">
+          ログイン
+        </Typography>
+        
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
+        
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
         )}
+        
+        {formik.status && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {formik.status}
+          </Alert>
+        )}
+        
         <form onSubmit={formik.handleSubmit}>
           <TextField
             fullWidth
@@ -153,9 +133,10 @@ const Login = () => {
             label="メールアドレス"
             value={formik.values.email}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             error={formik.touched.email && Boolean(formik.errors.email)}
             helperText={formik.touched.email && formik.errors.email}
-            sx={{ mb: 2 }}
+            margin="normal"
           />
           <TextField
             fullWidth
@@ -165,9 +146,10 @@ const Login = () => {
             type="password"
             value={formik.values.password}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             error={formik.touched.password && Boolean(formik.errors.password)}
             helperText={formik.touched.password && formik.errors.password}
-            sx={{ mb: 2 }}
+            margin="normal"
           />
           <Button
             color="primary"
@@ -175,7 +157,7 @@ const Login = () => {
             fullWidth
             type="submit"
             disabled={isLoggingIn}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, mt: 2 }}
           >
             {isLoggingIn ? (
               <>
@@ -187,7 +169,7 @@ const Login = () => {
             )}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
-            <Link component={RouterLink} to="/register">
+            <Link component={RouterLink} to="/register" variant="body2">
               アカウントをお持ちでない方はこちら
             </Link>
           </Box>

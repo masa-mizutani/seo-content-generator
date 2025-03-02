@@ -47,7 +47,11 @@ app = FastAPI(
 # CORSミドルウェアを追加
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://seo-content-generator-frontend.onrender.com",
+        "http://localhost:5173",  # 開発環境用
+        "http://localhost:3000",  # 開発環境用（別ポート）
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],

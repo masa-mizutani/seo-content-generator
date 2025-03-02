@@ -34,9 +34,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userData = await authApi.getCurrentUser();
       console.log('AuthContext: User data loaded successfully:', userData);
       setUser(userData);
+      return userData;
     } catch (err) {
       console.error('AuthContext: Failed to load user:', err);
       localStorage.removeItem('token');
+      setUser(null);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -48,10 +51,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthContext: Attempting login with:', { email });
       
       // ユーザー情報を取得
-      const userData = await authApi.getCurrentUser();
-      console.log('AuthContext: Login successful, setting user:', userData);
-      setUser(userData);
-      return { user: userData };
+      await loadUser();
+      if (!user) {
+        throw new Error('ユーザー情報の取得に失敗しました');
+      }
+      return { user };
     } catch (err) {
       console.error('AuthContext: Login failed:', err);
       setError(err instanceof Error ? err : new Error('ログインに失敗しました'));
