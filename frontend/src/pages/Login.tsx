@@ -12,7 +12,6 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { authApi } from '../services/api';
 
 // バリデーションスキーマ
@@ -33,7 +32,6 @@ interface FormValues {
 }
 
 const Login = () => {
-  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
@@ -58,18 +56,20 @@ const Login = () => {
 
       try {
         // authApiを使用してログイン
-        await authApi.login(values.email, values.password);
+        const response = await authApi.login(values.email, values.password);
+        console.log('Login successful, token received:', !!response.access_token);
         
         // ユーザー情報を取得してコンテキストを更新
         try {
-          await authApi.getCurrentUser();
+          const userData = await authApi.getCurrentUser();
+          console.log('User data fetched successfully:', userData);
           
           // コンテンツ生成ページへリダイレクト
           navigate('/generate');
         } catch (userError) {
           console.error('Error during user data fetch:', userError);
           setError('ユーザー情報の取得に失敗しました。再度ログインしてください。');
-          throw userError;
+          localStorage.removeItem('token');
         }
       } catch (loginError) {
         console.error('Login API error:', loginError);
@@ -78,6 +78,7 @@ const Login = () => {
         } else {
           setError('ログインに失敗しました');
         }
+        localStorage.removeItem('token');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -85,6 +86,7 @@ const Login = () => {
       if (!error) {
         setError('予期せぬエラーが発生しました。再度お試しください。');
       }
+      localStorage.removeItem('token');
     } finally {
       setSubmitting(false);
       setIsLoggingIn(false);
@@ -101,30 +103,40 @@ const Login = () => {
   });
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-      <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 400 }}>
-        <Typography variant="h5" component="h1" gutterBottom align="center">
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          width: '100%',
+          maxWidth: 500,
+          mx: 2,
+        }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom align="center">
           ログイン
         </Typography>
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        
+
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
         )}
-        
-        {formik.status && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {formik.status}
-          </Alert>
-        )}
-        
+
         <form onSubmit={formik.handleSubmit}>
           <TextField
             fullWidth
@@ -157,23 +169,20 @@ const Login = () => {
             fullWidth
             type="submit"
             disabled={isLoggingIn}
-            sx={{ mb: 2, mt: 2 }}
+            sx={{ mt: 3, mb: 2 }}
           >
-            {isLoggingIn ? (
-              <>
-                <CircularProgress size={24} sx={{ mr: 1, color: 'white' }} />
-                ログイン中...
-              </>
-            ) : (
-              'ログイン'
-            )}
+            {isLoggingIn ? <CircularProgress size={24} /> : 'ログイン'}
           </Button>
-          <Box sx={{ textAlign: 'center' }}>
-            <Link component={RouterLink} to="/register" variant="body2">
-              アカウントをお持ちでない方はこちら
-            </Link>
-          </Box>
         </form>
+
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2">
+            アカウントをお持ちでない場合は{' '}
+            <Link component={RouterLink} to="/register">
+              新規登録
+            </Link>
+          </Typography>
+        </Box>
       </Paper>
     </Box>
   );

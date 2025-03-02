@@ -41,12 +41,7 @@ const ContentGeneration = () => {
     setSelectedContent,
     generateContent,
     isGenerating,
-    updateContent,
-    isUpdating,
-    deleteContent,
-    isDeleting,
     error,
-    refetchContents,
   } = useContentGeneration();
 
   const formik = useFormik({
@@ -64,12 +59,6 @@ const ContentGeneration = () => {
       }
     },
   });
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm('本当に削除しますか？')) {
-      await deleteContent(id);
-    }
-  };
 
   const handleCloseDialog = () => {
     setSelectedContent(null);
@@ -130,18 +119,9 @@ const ContentGeneration = () => {
       </Paper>
 
       {/* 生成済みコンテンツ一覧 */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5">
-          生成済みコンテンツ
-        </Typography>
-        <Button 
-          variant="outlined" 
-          onClick={() => refetchContents()}
-          disabled={isLoadingContents}
-        >
-          {isLoadingContents ? <CircularProgress size={20} /> : '更新'}
-        </Button>
-      </Box>
+      <Typography variant="h5" gutterBottom>
+        生成済みコンテンツ
+      </Typography>
       
       {isLoadingContents ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -173,13 +153,6 @@ const ContentGeneration = () => {
                   >
                     <EditIcon />
                   </IconButton>
-                  <IconButton
-                    onClick={() => handleDelete(content.id)}
-                    aria-label="delete"
-                    disabled={isDeleting}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
                 </CardActions>
               </Card>
             </Grid>
@@ -193,7 +166,7 @@ const ContentGeneration = () => {
         </Box>
       )}
 
-      {/* コンテンツ編集ダイアログ */}
+      {/* コンテンツ詳細ダイアログ */}
       <Dialog
         open={Boolean(selectedContent)}
         onClose={handleCloseDialog}
@@ -202,7 +175,7 @@ const ContentGeneration = () => {
       >
         {selectedContent && (
           <>
-            <DialogTitle>コンテンツの編集</DialogTitle>
+            <DialogTitle>コンテンツの詳細</DialogTitle>
             <DialogContent>
               <Box sx={{ mt: 2 }}>
                 <Typography variant="h6" gutterBottom>
@@ -219,18 +192,6 @@ const ContentGeneration = () => {
             <DialogActions>
               <Button onClick={handleCloseDialog} color="primary">
                 閉じる
-              </Button>
-              <Button
-                onClick={() =>
-                  updateContent({
-                    id: selectedContent.id,
-                    data: { status: 'published' },
-                  })
-                }
-                color="primary"
-                disabled={isUpdating}
-              >
-                {isUpdating ? <CircularProgress size={24} /> : '公開する'}
               </Button>
             </DialogActions>
           </>
