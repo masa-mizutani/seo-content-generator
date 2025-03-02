@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -17,6 +17,8 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -41,8 +43,14 @@ const ContentGeneration = () => {
     setSelectedContent,
     generateContent,
     isGenerating,
+    deleteContent,
+    isDeleting,
     error,
   } = useContentGeneration();
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   const formik = useFormik({
     initialValues: {
@@ -54,14 +62,38 @@ const ContentGeneration = () => {
       try {
         await generateContent(values);
         formik.resetForm();
+        showSnackbar('コンテンツの生成を開始しました', 'success');
       } catch (error) {
         console.error('Error generating content:', error);
+        showSnackbar('コンテンツの生成に失敗しました', 'error');
       }
     },
   });
 
   const handleCloseDialog = () => {
     setSelectedContent(null);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('本当に削除しますか？')) {
+      try {
+        await deleteContent(id);
+        showSnackbar('コンテンツを削除しました', 'success');
+      } catch (error) {
+        console.error('Error deleting content:', error);
+        showSnackbar('コンテンツの削除に失敗しました', 'error');
+      }
+    }
+  };
+
+  const showSnackbar = (message: string, severity: 'success' | 'error') => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -153,6 +185,13 @@ const ContentGeneration = () => {
                   >
                     <EditIcon />
                   </IconButton>
+                  <IconButton
+                    onClick={() => handleDelete(content.id)}
+                    aria-label="delete"
+                    disabled={isDeleting}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 </CardActions>
               </Card>
             </Grid>
@@ -197,6 +236,18 @@ const ContentGeneration = () => {
           </>
         )}
       </Dialog>
+
+      {/* スナックバー通知 */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

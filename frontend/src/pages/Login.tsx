@@ -65,7 +65,7 @@ const Login = () => {
           console.log('User data fetched successfully:', userData);
           
           // コンテンツ生成ページへリダイレクト
-          navigate('/generate');
+          window.location.href = '/generate';
         } catch (userError) {
           console.error('Error during user data fetch:', userError);
           setError('ユーザー情報の取得に失敗しました。再度ログインしてください。');

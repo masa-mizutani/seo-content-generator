@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { contentApi } from '../services/api';
 import { GeneratedContent, GenerationRequest } from '../types/api';
@@ -6,7 +6,6 @@ import { GeneratedContent, GenerationRequest } from '../types/api';
 export const useContentGeneration = () => {
   const queryClient = useQueryClient();
   const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   // コンテンツ生成
   const generateMutation = useMutation({
@@ -14,7 +13,7 @@ export const useContentGeneration = () => {
       // analysis_resultsが含まれていない場合は、ダミーデータを追加
       const requestData = {
         ...data,
-        analysis_results: data.analysis_results || {
+        analysis_results: {
           "top_results": [
             {
               "title": "SEO対策の基本ガイド",
@@ -34,7 +33,19 @@ export const useContentGeneration = () => {
           "meta_data": {
             "avg_title_length": 60,
             "avg_description_length": 155
-          }
+          },
+          "prompt": `
+以下の情報を元に、SEO対策に関する記事を作成してください。
+キーワード: ${data.keyword}
+記事の構成:
+1. はじめに - キーワードに関する一般的な説明
+2. 主要なポイント - キーワードに関連する重要な情報
+3. 実践的なアドバイス - 読者が実行できる具体的なステップ
+4. まとめ - 主要なポイントの要約
+
+記事は専門的でありながら、読みやすく、SEOに最適化されたものにしてください。
+約1000〜1500文字で作成してください。
+`
         }
       };
       return contentApi.generate(requestData);
@@ -48,8 +59,15 @@ export const useContentGeneration = () => {
   const { data: contents, isLoading: isLoadingContents } = useQuery({
     queryKey: ['contents'],
     queryFn: () => contentApi.getContents(),
-    // 自動的にデータを取得するように設定を戻す
     enabled: true,
+  });
+
+  // コンテンツ削除
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => contentApi.deleteContent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contents'] });
+    },
   });
 
   return {
@@ -59,6 +77,8 @@ export const useContentGeneration = () => {
     setSelectedContent,
     generateContent: generateMutation.mutate,
     isGenerating: generateMutation.isPending,
-    error: generateMutation.error,
+    deleteContent: deleteMutation.mutate,
+    isDeleting: deleteMutation.isPending,
+    error: generateMutation.error || deleteMutation.error,
   };
 };
