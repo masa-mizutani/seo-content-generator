@@ -46,6 +46,7 @@ const ContentGeneration = () => {
     deleteContent,
     isDeleting,
     error,
+    refetchContents,
   } = useContentGeneration();
 
   const formik = useFormik({
@@ -129,16 +130,26 @@ const ContentGeneration = () => {
       </Paper>
 
       {/* 生成済みコンテンツ一覧 */}
-      <Typography variant="h5" gutterBottom>
-        生成済みコンテンツ
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5">
+          生成済みコンテンツ
+        </Typography>
+        <Button 
+          variant="outlined" 
+          onClick={() => refetchContents()}
+          disabled={isLoadingContents}
+        >
+          {isLoadingContents ? <CircularProgress size={20} /> : '更新'}
+        </Button>
+      </Box>
+      
       {isLoadingContents ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <CircularProgress />
         </Box>
-      ) : (
+      ) : contents && contents.length > 0 ? (
         <Grid container spacing={3}>
-          {contents?.map((content) => (
+          {contents.map((content) => (
             <Grid item xs={12} md={6} key={content.id}>
               <Card>
                 <CardContent>
@@ -174,52 +185,56 @@ const ContentGeneration = () => {
             </Grid>
           ))}
         </Grid>
+      ) : (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body1" color="text.secondary">
+            生成済みコンテンツはありません
+          </Typography>
+        </Box>
       )}
 
       {/* コンテンツ編集ダイアログ */}
       <Dialog
         open={Boolean(selectedContent)}
         onClose={handleCloseDialog}
-        maxWidth="md"
         fullWidth
+        maxWidth="md"
       >
-        <DialogTitle>コンテンツ編集</DialogTitle>
-        <DialogContent>
-          {selectedContent && (
-            <Box sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                multiline
-                rows={15}
-                value={selectedContent.content}
-                onChange={(e) =>
-                  setSelectedContent({
-                    ...selectedContent,
-                    content: e.target.value,
+        {selectedContent && (
+          <>
+            <DialogTitle>コンテンツの編集</DialogTitle>
+            <DialogContent>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {selectedContent.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  キーワード: {selectedContent.keyword}
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  {selectedContent.content}
+                </Typography>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseDialog} color="primary">
+                閉じる
+              </Button>
+              <Button
+                onClick={() =>
+                  updateContent({
+                    id: selectedContent.id,
+                    data: { status: 'published' },
                   })
                 }
-                sx={{ mb: 2 }}
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>キャンセル</Button>
-          <Button
-            onClick={() => {
-              if (selectedContent) {
-                updateContent({
-                  id: selectedContent.id,
-                  data: { content: selectedContent.content },
-                });
-                handleCloseDialog();
-              }
-            }}
-            disabled={isUpdating}
-          >
-            保存
-          </Button>
-        </DialogActions>
+                color="primary"
+                disabled={isUpdating}
+              >
+                {isUpdating ? <CircularProgress size={24} /> : '公開する'}
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
     </Box>
   );

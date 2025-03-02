@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { contentApi } from '../services/api';
 import { GeneratedContent, GenerationRequest } from '../types/api';
@@ -6,6 +6,7 @@ import { GeneratedContent, GenerationRequest } from '../types/api';
 export const useContentGeneration = () => {
   const queryClient = useQueryClient();
   const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   // コンテンツ生成
   const generateMutation = useMutation({
@@ -44,10 +45,17 @@ export const useContentGeneration = () => {
   });
 
   // コンテンツ一覧取得
-  const { data: contents, isLoading: isLoadingContents } = useQuery({
+  const { data: contents, isLoading: isLoadingContents, refetch } = useQuery({
     queryKey: ['contents'],
     queryFn: () => contentApi.getContents(),
+    // 自動的にデータを取得しないように設定
+    enabled: initialLoadDone,
   });
+
+  // コンポーネントがマウントされたときに初期ロードフラグを設定
+  useEffect(() => {
+    setInitialLoadDone(true);
+  }, []);
 
   // コンテンツ更新
   const updateMutation = useMutation({
@@ -78,5 +86,6 @@ export const useContentGeneration = () => {
     deleteContent: deleteMutation.mutate,
     isDeleting: deleteMutation.isPending,
     error: generateMutation.error || updateMutation.error || deleteMutation.error,
+    refetchContents: refetch,
   };
 };
